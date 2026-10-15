@@ -133,18 +133,9 @@
                         </button>
                     </div>
                 </div>
-
-                <!-- Cart Button -->
-                <div class="flex items-center space-x-3">
-                    <button onclick="toggleCartDrawer()" class="relative bg-brand-600 hover:bg-brand-500 text-dark-950 font-bold px-4 py-2.5 rounded-full flex items-center space-x-2 transition-all shadow-lg shadow-brand-600/20 active:scale-95">
-                        <i class="fa-solid fa-utensils text-base"></i>
-                        <span class="hidden sm:inline text-sm font-semibold">Pesanan</span>
-                        <span id="cartCountBadge" class="bg-dark-950 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center ml-1 border border-brand-500">
-                            0
-                        </span>
-                    </button>
-                </div>
             </div>
+
+        </div>
 
             <!-- Mobile Search Bar (Below Header) -->
             <div class="pb-4 md:hidden">
@@ -753,11 +744,38 @@
         function updateCartUI() {
             // Count total items
             const totalCount = cart.reduce((sum, item) => sum + item.quantity, 0);
-            document.getElementById("cartCountBadge").innerText = totalCount;
+            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
-            // Render Cart Drawer List
+        // Update badge & total harga di Floating Cart Bar
+            const floatingCount = document.getElementById("floatingCartCount");
+            const floatingTotal = document.getElementById("floatingCartTotal");
+            const floatingBar = document.getElementById("floatingCartBar");
+
+    if (floatingCount) floatingCount.innerText = totalCount;
+    if (floatingTotal) floatingTotal.innerText = formatRupiah(subtotal);
+
+        // Jika keranjang kosong
             const container = document.getElementById("cartItemsContainer");
             const footer = document.getElementById("cartFooter");
+
+    if (cart.length === 0) {
+    if (floatingBar) floatingBar.classList.add("hidden"); // Sembunyikan floating bar
+    container.innerHTML = `
+      <div class="text-center py-12 text-slate-400 space-y-3">
+        <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto">
+          <i class="fa-solid fa-basket-shopping text-2xl"></i>
+        </div>
+        <p class="text-sm font-semibold text-slate-600">Keranjang Masih Kosong</p>
+        <p class="text-xs text-slate-400 max-w-xs mx-auto">Silakan pilih menu faforitmu terlebih dahulu.</p>
+      </div>
+    `;
+    footer.classList.add("hidden");
+    return;
+  }
+
+  // Jika ada isi keranjang, tampilkan floating bar & footer
+  if (floatingBar) floatingBar.classList.remove("hidden");
+  footer.classList.remove("hidden");
 
             if (cart.length === 0) {
                 container.innerHTML = `
@@ -799,7 +817,7 @@
             `).join("");
 
             // Calculate totals
-            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
             const tax = subtotal * 0.10;
             const total = subtotal + tax;
 
@@ -1019,6 +1037,29 @@
   // Buka WhatsApp di tab baru / aplikasi WA
   window.open(waURL, "_blank");
 }
-    </script>
+</script>
+<!-- FLOATING BOTTOM CART BAR -->
+<div id="floatingCartBar" onclick="toggleCartDrawer()" class="fixed bottom-4 left-4 right-4 md:left-auto md:right-6 md:w-96 bg-emerald-600 hover:bg-emerald-500 text-white p-4 rounded-2xl shadow-2xl z-40 cursor-pointer flex items-center justify-between transition-all transform hover:scale-[1.02]">
+  
+  <div class="flex items-center space-x-3">
+    <!-- Badge Jumlah Item -->
+    <div class="relative bg-emerald-700 w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm">
+      <i class="fa-solid fa-bag-shopping text-base"></i>
+      <span id="floatingCartCount" class="absolute -top-1.5 -right-1.5 bg-amber-400 text-slate-900 text-xs font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-emerald-600">0</span>
+    </div>
+    
+    <!-- Info Ringkas -->
+    <div>
+      <p class="text-xs text-emerald-100 font-medium">Keranjang Pesanan</p>
+      <p id="floatingCartTotal" class="text-sm font-extrabold">Rp 0</p>
+    </div>
+  </div>
+
+  <!-- Aksi Buka Keranjang -->
+  <div class="flex items-center space-x-2 font-bold text-sm bg-white/10 px-3 py-1.5 rounded-xl">
+    <span>Lihat Pesanan</span>
+    <i class="fa-solid fa-chevron-right text-xs"></i>
+  </div>
+</div>
 </body>
 </html>
