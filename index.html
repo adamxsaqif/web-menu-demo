@@ -284,6 +284,17 @@
             <i class="fa-solid fa-calendar-check"></i>
             <span>Reservasi</span>
           </button>
+          <!-- Metode Pembayaran -->
+        <div>
+        <label class="block text-xs font-semibold text-slate-500 mb-2">METODE PEMBAYARAN *</label>
+            <select id="paymentMethod" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500 font-medium text-slate-700">
+          <option value="QRIS (All Payment)">QRIS (Gopay, OVO, ShopeePay, Dana, LinkAja)</option>
+          <option value="Transfer Bank">Transfer Bank (BCA, Mandiri, BRI, BNI)</option>
+          <option value="Kartu Debit / Kredit">Kartu Debit / Kredit</option>
+          <option value="E-Wallet">Dompet Digital (Gopay / Dana / ShopeePay)</option>
+          <option value="Tunai / Cash">Tunai / Cash di Kasir</option>
+            </select>
+         </div>
         </div>
       </div>
 
@@ -895,26 +906,33 @@
 }
 
         // ORDER TYPE SELECTION
-        function setOrderType(type) {
-            orderType = type;
-            const btnDineIn = document.getElementById("btnDineIn");
-            const btnTakeaway = document.getElementById("btnTakeaway");
-            const btnReservation = document.getElementById("btnReservation"); // tambahan jika ada opsi reservasi
-            const tableContainer = document.getElementById("tableNoContainer");
+       let selectedOrderType = "Dine-In"; // Default
 
-            [btnDineIn, btnTakeaway, btnReservation].forEach(btn => {
-    if (btn) btn.className = "py-2 px-3 rounded-xl border-2 text-xs font-bold flex items-center justify-center border-slate-700 text-slate-400 bg-slate-800/50";
+function setOrderType(type) {
+  selectedOrderType = type;
+  
+  const btnDineIn = document.getElementById("btnDineIn");
+  const btnTakeaway = document.getElementById("btnTakeaway");
+  const btnReservasi = document.getElementById("btnReservasi");
+  const tableInput = document.getElementById("tableNumber");
+
+  // Reset Style Semua Tombol
+  [btnDineIn, btnTakeaway, btnReservasi].forEach(btn => {
+    if (btn) {
+      btn.className = "py-2 text-xs font-bold rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 flex items-center justify-center space-x-1";
+    }
   });
 
-            if (type === 'dine-in') {
-    if (btnDineIn) btnDineIn.className = "py-2 px-3 rounded-xl border-2 border-amber-500 bg-amber-500/10 text-amber-400 text-xs font-bold flex items-center justify-center";
-    if (tableContainer) tableContainer.classList.remove("hidden");
-  } else if (type === 'takeaway') {
-    if (btnTakeaway) btnTakeaway.className = "py-2 px-3 rounded-xl border-2 border-amber-500 bg-amber-500/10 text-amber-400 text-xs font-bold flex items-center justify-center";
-    if (tableContainer) tableContainer.classList.add("hidden");
-  } else if (type === 'reservation') {
-    if (btnReservation) btnReservation.className = "py-2 px-3 rounded-xl border-2 border-amber-500 bg-amber-500/10 text-amber-400 text-xs font-bold flex items-center justify-center";
-    if (tableContainer) tableContainer.classList.add("hidden");
+  // Highlight Tombol Terpilih & Atur Input Meja
+  if (type === "Dine-In" && btnDineIn) {
+    btnDineIn.className = "py-2 text-xs font-bold rounded-xl border border-brand-500 bg-brand-50 text-brand-600 flex items-center justify-center space-x-1";
+    if (tableInput) tableInput.placeholder = "Contoh: Meja 08";
+  } else if (type === "Takeaway" && btnTakeaway) {
+    btnTakeaway.className = "py-2 text-xs font-bold rounded-xl border border-brand-500 bg-brand-50 text-brand-600 flex items-center justify-center space-x-1";
+    if (tableInput) tableInput.placeholder = "Bungkus / Takeaway";
+  } else if (type === "Reservasi" && btnReservasi) {
+    btnReservasi.className = "py-2 text-xs font-bold rounded-xl border border-brand-500 bg-brand-50 text-brand-600 flex items-center justify-center space-x-1";
+    if (tableInput) tableInput.placeholder = "Tgl & Jam Reservasi";
   }
 }
 
@@ -1043,66 +1061,52 @@
                 toast.classList.add("opacity-0", "pointer-events-none", "translate-y-4");
             }, 3000);
         }
-
         function sendOrderToWhatsApp() {
   if (cart.length === 0) {
-    alert("Keranjang belanja masih kosong!");
+    alert("Keranjang pesanan masih kosong!");
     return;
   }
 
-  // Masukkan nomor WhatsApp Resto/Kasir di sini (Ganti dengan nomor aktif, gunakan kode negara 62)
-  const phoneNumber = "6285709734655";
+  const customerName = document.getElementById("customerName")?.value.trim();
+  const tableNumber = document.getElementById("tableNumber")?.value.trim();
+  const orderNotes = document.getElementById("orderNotes")?.value.trim() || "-";
+  const paymentMethod = document.getElementById("paymentMethod")?.value || "Tunai / Cash";
 
-  const customerName = document.getElementById("customerName")?.value || "Pelanggan";
-  const tableNo = document.getElementById("tableNo")?.value || "-";
-  const orderNotes = document.getElementById("orderNotes")?.value || "-";
-  
-  // Format Tanggal & Jam
-  const now = new Date();
-  const timeString = now.toLocaleDateString("id-ID") + " | " + now.toLocaleTimeString("id-ID", { hour: '2-digit', minute: '2-digit' });
-  const orderID = "SAV-" + Math.floor(1000 + Math.random() * 9000);
+  if (!customerName) {
+    alert("Mohon isi Nama Pemesan terlebih dahulu.");
+    return;
+  }
 
-  // Buat Rincian Item Pesanan
-  let itemsList = "";
-  let subtotal = 0;
-
-  cart.forEach((item, index) => {
-    const itemTotal = item.price * item.quantity;
-    subtotal += itemTotal;
-    itemsList += `${index + 1}. *${item.name}* (${item.quantity}x) = ${formatRupiah(itemTotal)}\n`;
-  });
-
-  const tax = subtotal * 0.1; // Pajak 10% (sesuaikan jika ada)
+  const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const tax = subtotal * 0.10;
   const grandTotal = subtotal + tax;
 
-  // Format Tipe Pesanan
-  let orderTypeLabel = "Dine-In";
-  if (orderType === "takeaway") orderTypeLabel = "Takeaway (Bawa Pulang)";
-  if (orderType === "reservation") orderTypeLabel = "Reservasi";
-
-  // Menyusun Teks Pesanan WhatsApp
-  let message = `*--- NOTA PESANAN NEW ORDER ---*\n`;
-  message += `*No. Antrean:* #${orderID}\n`;
-  message += `*Waktu:* ${timeString}\n\n`;
+  // Format Pesan WhatsApp
+  let message = `*RINGKASAN PESANAN - SAVORIA*\n`;
+  message += `===============================\n`;
   message += `*Nama Pemesan:* ${customerName}\n`;
-  message += `*Tipe Pesanan:* ${orderTypeLabel}\n`;
-  if (orderType === "dine-in") {
-    message += `*Nomor Meja:* Meja ${tableNo}\n`;
-  }
-  message += `\n*DETAIL PESANAN:*\n${itemsList}\n`;
-  message += `-----------------------------------\n`;
+  message += `*Tipe Pesanan:* ${selectedOrderType}\n`;
+  message += `*No. Meja/Keterangan:* ${tableNumber || '-'}\n`;
+  message += `*Metode Pembayaran:* ${paymentMethod}\n`;
+  message += `===============================\n\n`;
+  message += `*DETAIL ITEM:*\n`;
+
+  cart.forEach((item, index) => {
+    message += `${index + 1}. ${item.name} x${item.quantity} = ${formatRupiah(item.price * item.quantity)}\n`;
+  });
+
+  message += `\n-------------------------------\n`;
   message += `*Subtotal:* ${formatRupiah(subtotal)}\n`;
-  message += `*Pajak (10%):* ${formatRupiah(tax)}\n`;
+  message += `*Pajak & Layanan (10%):* ${formatRupiah(tax)}\n`;
   message += `*TOTAL BAYAR:* *${formatRupiah(grandTotal)}*\n`;
-  message += `-----------------------------------\n`;
-  message += `*Catatan Tambahan:* ${orderNotes}\n\n`;
+  message += `-------------------------------\n`;
+  message += `*Catatan Khusus:* ${orderNotes}\n\n`;
   message += `Mohon segera diproses ya, terima kasih!`;
 
-  // Encode teks agar valid untuk URL WhatsApp
-    const encodedMessage = encodeURIComponent(message);
-    const waURL = `https://wa.me/${6285709734655}?text=${encodedMessage}`;
+  const encodedMessage = encodeURIComponent(message);
+  const phoneNumber = "6285709734655";
+  const waURL = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
 
-  // Buka WhatsApp di tab baru / aplikasi WA
   window.open(waURL, "_blank");
 }
   // Header Auto-Hide on Scroll
