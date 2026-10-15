@@ -244,18 +244,98 @@
     <!-- DRAWER / MODAL KERANJANG (CART) -->
     <div id="cartDrawerBackdrop" onclick="toggleCartDrawer()" class="fixed inset-0 bg-dark-950/60 backdrop-blur-sm z-50 opacity-0 pointer-events-none transition-opacity duration-300"></div>
     
-    <div id="cartDrawer" class="fixed right-0 top-0 bottom-0 w-full max-w-md bg-white z-50 shadow-2xl flex flex-col transform translate-x-full transition-transform duration-300 ease-in-out">
-        
-        <!-- Cart Drawer Header -->
-        <div class="p-5 bg-dark-900 text-white flex items-center justify-between border-b border-slate-800">
-            <div class="flex items-center space-x-3">
-                <i class="fa-solid fa-bag-shopping text-brand-500 text-xl"></i>
-                <h3 class="font-bold text-lg">Keranjang Pesanan</h3>
-            </div>
-            <button onclick="toggleCartDrawer()" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition-colors">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
+    <div id="cartDrawer" class="fixed right-0 top-0 bottom-0 w-full max-w-md bg-white z-50 shadow-2xl flex flex-col transition-transform transform translate-x-full duration-300">
+  
+  <!-- 1. Header Modal (Sticky Top) -->
+  <div class="p-5 bg-dark-900 text-white flex items-center justify-between border-b border-slate-800 shrink-0">
+    <div class="flex items-center space-x-3">
+      <i class="fa-solid fa-bag-shopping text-brand-500 text-xl"></i>
+      <h3 class="font-bold text-lg">Keranjang Pesanan</h3>
+    </div>
+    <button onclick="toggleCartDrawer()" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-300">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+
+  <!-- 2. Area Isi Keranjang + Form (Dapat Di-Scroll) -->
+  <div class="flex-grow overflow-y-auto p-5 space-y-6">
+    <!-- Daftar Item Makanan -->
+    <div id="cartItemsContainer" class="space-y-4">
+      <!-- Item akan di-inject oleh JS -->
+    </div>
+
+    <!-- Form Detail Pemesan (Disatukan di Bawah Daftar Makanan) -->
+    <div id="orderFormContainer" class="pt-4 border-t border-slate-100 space-y-4">
+      <h4 class="font-bold text-sm text-slate-800 uppercase tracking-wider">Detail Pemesanan</h4>
+      
+      <!-- Tipe Pesanan -->
+      <div>
+        <label class="block text-xs font-semibold text-slate-500 mb-2">TIPE PESANAN</label>
+        <div class="grid grid-cols-3 gap-2">
+          <button type="button" onclick="setOrderType('Dine-In')" id="btnDineIn" class="py-2 text-xs font-bold rounded-xl border border-brand-500 bg-brand-50 text-brand-600 flex items-center justify-center space-x-1">
+            <i class="fa-solid fa-utensils"></i>
+            <span>Dine-In</span>
+          </button>
+          <button type="button" onclick="setOrderType('Takeaway')" id="btnTakeaway" class="py-2 text-xs font-bold rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 flex items-center justify-center space-x-1">
+            <i class="fa-solid fa-bag-shopping"></i>
+            <span>Takeaway</span>
+          </button>
+          <button type="button" onclick="setOrderType('Reservasi')" id="btnReservasi" class="py-2 text-xs font-bold rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 flex items-center justify-center space-x-1">
+            <i class="fa-solid fa-calendar-check"></i>
+            <span>Reservasi</span>
+          </button>
         </div>
+      </div>
+
+      <!-- Nama & No Meja -->
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 mb-1">Nama Pemesan *</label>
+          <input type="text" id="customerName" placeholder="Contoh: Budi" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 mb-1">Nomor Meja *</label>
+          <input type="text" id="tableNumber" placeholder="Contoh: Meja 08" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500">
+        </div>
+      </div>
+
+      <!-- Catatan Khusus -->
+      <div>
+        <label class="block text-xs font-semibold text-slate-500 mb-1">Catatan Khusus (Optional)</label>
+        <textarea id="orderNotes" rows="2" placeholder="Misal: Kurangi gula, tanpa sedotan..." class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-brand-500"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Rincian Harga & Tombol Bayar (Fixed Bottom) -->
+  <div id="cartFooter" class="p-5 bg-slate-50 border-t border-slate-200 space-y-3 shrink-0">
+    <div class="space-y-1.5 text-xs text-slate-600">
+      <div class="flex justify-between">
+        <span>Subtotal</span>
+        <span id="subtotalPrice" class="font-semibold text-slate-800">Rp 0</span>
+      </div>
+      <div class="flex justify-between">
+        <span>Pajak & Layanan (10%)</span>
+        <span id="taxPrice" class="font-semibold text-slate-800">Rp 0</span>
+      </div>
+      <div class="flex justify-between text-sm font-extrabold text-slate-900 pt-2 border-t border-slate-200">
+        <span>Total Pembayaran</span>
+        <span id="totalPrice" class="text-brand-600">Rp 0</span>
+      </div>
+    </div>
+
+    <button onclick="sendOrder()" class="w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-900 font-bold text-sm rounded-xl shadow-lg flex items-center justify-center space-x-2">
+      <span>Kirim Pesanan Sekarang</span>
+      <i class="fa-solid fa-arrow-right text-xs"></i>
+    </button>
+
+    <button onclick="sendOrderToWhatsApp()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm rounded-xl shadow-lg flex items-center justify-center space-x-2">
+      <i class="fa-brands fa-whatsapp text-lg"></i>
+      <span>Kirim Pesanan via WhatsApp</span>
+    </button>
+  </div>
+
+</div>
 
         <!-- Cart Items List (Scrollable) -->
         <div id="cartItemsContainer" class="flex-grow overflow-y-auto p-5 space-y-4">
@@ -741,90 +821,78 @@
             updateCartUI();
         }
 
-        function updateCartUI() {
-            // Count total items
-            const totalCount = cart.reduce((sum, item) => sum + item.quantity, 0);
-            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+         function updateCartUI() {
+  const totalCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const tax = subtotal * 0.10; // Pajak 10%
+  const grandTotal = subtotal + tax;
 
-        // Update badge & total harga di Floating Cart Bar
-            const floatingCount = document.getElementById("floatingCartCount");
-            const floatingTotal = document.getElementById("floatingCartTotal");
-            const floatingBar = document.getElementById("floatingCartBar");
+  // 1. Update Floating Cart Bar (Melayang di bawah halaman)
+  const floatingCount = document.getElementById("floatingCartCount");
+  const floatingTotal = document.getElementById("floatingCartTotal");
+  const floatingBar = document.getElementById("floatingCartBar");
 
-    if (floatingCount) floatingCount.innerText = totalCount;
-    if (floatingTotal) floatingTotal.innerText = formatRupiah(subtotal);
+  if (floatingCount) floatingCount.innerText = totalCount;
+  if (floatingTotal) floatingTotal.innerText = formatRupiah(grandTotal);
 
-        // Jika keranjang kosong
-            const container = document.getElementById("cartItemsContainer");
-            const footer = document.getElementById("cartFooter");
+  // 2. Ambil Elemen Drawer Keranjang
+  const container = document.getElementById("cartItemsContainer");
+  const footer = document.getElementById("cartFooter");
+  const orderForm = document.getElementById("orderFormContainer");
 
-    if (cart.length === 0) {
-    if (floatingBar) floatingBar.classList.add("hidden"); // Sembunyikan floating bar
-    container.innerHTML = `
-      <div class="text-center py-12 text-slate-400 space-y-3">
-        <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto">
-          <i class="fa-solid fa-basket-shopping text-2xl"></i>
+  // Jika Keranjang Kosong
+  if (cart.length === 0) {
+    if (floatingBar) floatingBar.classList.add("hidden");
+    if (container) {
+      container.innerHTML = `
+        <div class="text-center py-12 text-slate-400 space-y-3">
+          <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto">
+            <i class="fa-solid fa-basket-shopping text-2xl"></i>
+          </div>
+          <p class="text-sm font-semibold text-slate-600">Keranjang Masih Kosong</p>
+          <p class="text-xs text-slate-400 max-w-xs mx-auto">Silakan pilih menu favoritmu terlebih dahulu.</p>
         </div>
-        <p class="text-sm font-semibold text-slate-600">Keranjang Masih Kosong</p>
-        <p class="text-xs text-slate-400 max-w-xs mx-auto">Silakan pilih menu faforitmu terlebih dahulu.</p>
-      </div>
-    `;
-    footer.classList.add("hidden");
+      `;
+    }
+    if (footer) footer.classList.add("hidden");
+    if (orderForm) orderForm.classList.add("hidden");
     return;
   }
 
-  // Jika ada isi keranjang, tampilkan floating bar & footer
+  // Jika Ada Isi Keranjang
   if (floatingBar) floatingBar.classList.remove("hidden");
-  footer.classList.remove("hidden");
+  if (footer) footer.classList.remove("hidden");
+  if (orderForm) orderForm.classList.remove("hidden");
 
-            if (cart.length === 0) {
-                container.innerHTML = `
-                    <div class="text-center py-12 text-slate-400 space-y-3">
-                        <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto text-2xl text-slate-400">
-                            <i class="fa-solid fa-basket-shopping"></i>
-                        </div>
-                        <p class="text-sm font-semibold text-slate-600">Keranjang Masih Kosong</p>
-                        <p class="text-xs text-slate-400 max-w-xs mx-auto">Silakan pilih menu Lezat dari daftar kami untuk memulai pesanan Anda.</p>
-                    </div>
-                `;
-                footer.classList.add("hidden");
-                return;
-            }
+  // Render List Makanan
+  if (container) {
+    container.innerHTML = cart.map(item => `
+      <div class="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-100">
+        <div class="flex items-center space-x-3">
+          <img src="${item.image}" alt="${item.name}" class="w-12 h-12 rounded-xl object-cover">
+          <div>
+            <h4 class="font-bold text-xs text-slate-800 line-clamp-1">${item.name}</h4>
+            <p class="text-xs text-slate-500 font-semibold">${formatRupiah(item.price)}</p>
+          </div>
+        </div>
+        <div class="flex items-center space-x-2 bg-white px-2 py-1 rounded-xl border border-slate-200">
+          <button onclick="updateQuantity(${item.id}, -1)" class="w-6 h-6 rounded-lg bg-slate-100 text-slate-600 font-bold text-xs flex items-center justify-center hover:bg-slate-200">-</button>
+          <span class="text-xs font-bold text-slate-800 min-w-[16px] text-center">${item.quantity}</span>
+          <button onclick="updateQuantity(${item.id}, 1)" class="w-6 h-6 rounded-lg bg-slate-100 text-slate-600 font-bold text-xs flex items-center justify-center hover:bg-slate-200">+</button>
+        </div>
+      </div>
+    `).join("");
+  }
 
-            footer.classList.remove("hidden");
+  // Update Teks Total Harga & Pajak di Drawer (Fix Rp 0)
+  const subtotalElem = document.getElementById("subtotalPrice");
+  const taxElem = document.getElementById("taxPrice");
+  const totalElem = document.getElementById("totalPrice");
 
-            container.innerHTML = cart.map(item => `
-                <div class="flex items-center space-x-3 p-3 bg-white rounded-2xl border border-slate-100 shadow-sm">
-                    <img src="${item.image}" alt="${item.name}" class="w-16 h-16 rounded-xl object-cover flex-shrink-0" onerror="this.src='https://placehold.co/100?text=Savoria'">
-                    <div class="flex-grow min-w-0">
-                        <h5 class="text-xs font-bold text-slate-800 truncate">${item.name}</h5>
-                        <p class="text-xs font-semibold text-brand-600 mt-0.5">${formatRupiah(item.price)}</p>
-                        <p class="text-[10px] text-slate-400">Subtotal: ${formatRupiah(item.price * item.quantity)}</p>
-                    </div>
-                    <div class="flex items-center space-x-2 bg-slate-100 rounded-xl p-1">
-                        <button onclick="updateCartQuantity(${item.id}, -1)" class="w-6 h-6 bg-white rounded-lg text-slate-700 text-xs font-bold flex items-center justify-center shadow-sm hover:bg-slate-200">
-                            <i class="fa-solid fa-minus"></i>
-                        </button>
-                        <span class="text-xs font-bold px-1 text-slate-800">${item.quantity}</span>
-                        <button onclick="updateCartQuantity(${item.id}, 1)" class="w-6 h-6 bg-white rounded-lg text-slate-700 text-xs font-bold flex items-center justify-center shadow-sm hover:bg-slate-200">
-                            <i class="fa-solid fa-plus"></i>
-                        </button>
-                    </div>
-                    <button onclick="removeFromCart(${item.id})" class="text-slate-400 hover:text-red-500 text-xs p-1">
-                        <i class="fa-solid fa-trash-can"></i>
-                    </button>
-                </div>
-            `).join("");
-
-            // Calculate totals
-            subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-            const tax = subtotal * 0.10;
-            const total = subtotal + tax;
-
-            document.getElementById("subtotalPrice").innerText = formatRupiah(subtotal);
-            document.getElementById("taxPrice").innerText = formatRupiah(tax);
-            document.getElementById("totalPrice").innerText = formatRupiah(total);
-        }
+  if (subtotalElem) subtotalElem.innerText = formatRupiah(subtotal);
+  if (taxElem) taxElem.innerText = formatRupiah(tax);
+  if (totalElem) totalElem.innerText = formatRupiah(grandTotal);
+}
 
         // ORDER TYPE SELECTION
         function setOrderType(type) {
