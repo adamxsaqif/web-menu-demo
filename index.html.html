@@ -277,15 +277,19 @@
             <!-- Order Type Selection -->
             <div>
                 <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Tipe Pesanan</label>
-                <div class="grid grid-cols-2 gap-2">
-                    <button type="button" id="btnDineIn" onclick="setOrderType('dine-in')" class="py-2 px-3 rounded-xl border-2 text-xs font-bold flex items-center justify-center space-x-2 border-brand-600 bg-brand-50 text-brand-800">
+                <div class="grid grid-cols-3 gap-2">
+                    <button type="button" id="btnDineIn" onclick="setOrderType('dine-in')" class="py-2 px-3 rounded-xl border-2 text-xs font-bold flex items-center justify-center space-x-1.5 border-amber-500 bg-amber-500/10 text-amber-500">
                         <i class="fa-solid fa-utensils"></i>
-                        <span>Makan di Tempat</span>
+                        <span>Dine-In</span>
                     </button>
-                    <button type="button" id="btnTakeaway" onclick="setOrderType('takeaway')" class="py-2 px-3 rounded-xl border-2 text-xs font-bold flex items-center justify-center space-x-2 border-slate-200 bg-white text-slate-600">
+                    <button type="button" id="btnTakeaway" onclick="setOrderType('takeaway')" class="py-2 px-3 rounded-xl border-2 text-xs font-bold flex items-center justify-center space-x-1.5 border-slate-200 text-slate-600">
                         <i class="fa-solid fa-box-archive"></i>
-                        <span>Bawa Pulang</span>
+                        <span>Takeaway</span>
                     </button>
+                    <button type="button" id="btnReservation" onclick="setOrderType('reservation')" class="py-2 px-3 rounded-xl border-2 text-xs font-bold flex items-center justify-center space-x-1.5 border-slate-200 text-slate-600">
+                         <i class="fa-solid fa-calendar-check"></i>
+                         <span>Reservasi</span>
+                     </button>
                 </div>
             </div>
 
@@ -328,6 +332,25 @@
                 <span>Kirim Pesanan Sekarang</span>
                 <i class="fa-solid fa-arrow-right"></i>
             </button>
+            <button type="button" onclick="sendOrderToWhatsApp()" class="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg flex items-center justify-center space-x-2 transition-all">
+                 <i class="fa-brands fa-whatsapp text-lg"></i>
+                 <span>Kirim Pesanan via WhatsApp</span>
+            </button>
+            <!-- Price Breakdown -->
+            <div class="pt-2 border-t border-slate-200 space-y-1.5 text-xs">
+                <div class="flex justify-between text-slate-500">
+                    <span>Subtotal</span>
+                    <span id="subtotalPrice" class="font-semibold text-slate-800">Rp 0</span>
+                </div>
+                <div class="flex justify-between text-slate-500">
+                    <span>Pajak & Layanan (10%)</span>
+                    <span id="taxPrice" class="font-semibold text-slate-800">Rp 0</span>
+                </div>
+                <div class="flex justify-between text-base font-extrabold text-slate-900 pt-2 border-t border-slate-200">
+                    <span>Total Pembayaran</span>
+                    <span id="totalPrice" class="text-brand-600">Rp 0</span>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -544,7 +567,7 @@
         let currentCategory = "all";
         let searchQuery = "";
         let cart = [];
-        let orderType = "dine-in"; // 'dine-in' or 'takeaway'
+        let orderType = "dine-in"; // 'dine-in', 'takeaway', atau 'reservation
 
         // INITIALIZATION
         document.addEventListener("DOMContentLoaded", () => {
@@ -790,18 +813,24 @@
             orderType = type;
             const btnDineIn = document.getElementById("btnDineIn");
             const btnTakeaway = document.getElementById("btnTakeaway");
+            const btnReservation = document.getElementById("btnReservation"); // tambahan jika ada opsi reservasi
             const tableContainer = document.getElementById("tableNoContainer");
 
+            [btnDineIn, btnTakeaway, btnReservation].forEach(btn => {
+    if (btn) btn.className = "py-2 px-3 rounded-xl border-2 text-xs font-bold flex items-center justify-center border-slate-700 text-slate-400 bg-slate-800/50";
+  });
+
             if (type === 'dine-in') {
-                btnDineIn.className = "py-2 px-3 rounded-xl border-2 text-xs font-bold flex items-center justify-center space-x-2 border-brand-600 bg-brand-50 text-brand-800";
-                btnTakeaway.className = "py-2 px-3 rounded-xl border-2 text-xs font-bold flex items-center justify-center space-x-2 border-slate-200 bg-white text-slate-600";
-                tableContainer.classList.remove("hidden");
-            } else {
-                btnTakeaway.className = "py-2 px-3 rounded-xl border-2 text-xs font-bold flex items-center justify-center space-x-2 border-brand-600 bg-brand-50 text-brand-800";
-                btnDineIn.className = "py-2 px-3 rounded-xl border-2 text-xs font-bold flex items-center justify-center space-x-2 border-slate-200 bg-white text-slate-600";
-                tableContainer.classList.add("hidden");
-            }
-        }
+    if (btnDineIn) btnDineIn.className = "py-2 px-3 rounded-xl border-2 border-amber-500 bg-amber-500/10 text-amber-400 text-xs font-bold flex items-center justify-center";
+    if (tableContainer) tableContainer.classList.remove("hidden");
+  } else if (type === 'takeaway') {
+    if (btnTakeaway) btnTakeaway.className = "py-2 px-3 rounded-xl border-2 border-amber-500 bg-amber-500/10 text-amber-400 text-xs font-bold flex items-center justify-center";
+    if (tableContainer) tableContainer.classList.add("hidden");
+  } else if (type === 'reservation') {
+    if (btnReservation) btnReservation.className = "py-2 px-3 rounded-xl border-2 border-amber-500 bg-amber-500/10 text-amber-400 text-xs font-bold flex items-center justify-center";
+    if (tableContainer) tableContainer.classList.add("hidden");
+  }
+}
 
         // CART DRAWER TOGGLE
         function toggleCartDrawer() {
@@ -928,6 +957,68 @@
                 toast.classList.add("opacity-0", "pointer-events-none", "translate-y-4");
             }, 3000);
         }
+
+        function sendOrderToWhatsApp() {
+  if (cart.length === 0) {
+    alert("Keranjang belanja masih kosong!");
+    return;
+  }
+
+  // Masukkan nomor WhatsApp Resto/Kasir di sini (Ganti dengan nomor aktif, gunakan kode negara 62)
+  const phoneNumber = "6285709734655";
+
+  const customerName = document.getElementById("customerName")?.value || "Pelanggan";
+  const tableNo = document.getElementById("tableNo")?.value || "-";
+  const orderNotes = document.getElementById("orderNotes")?.value || "-";
+  
+  // Format Tanggal & Jam
+  const now = new Date();
+  const timeString = now.toLocaleDateString("id-ID") + " | " + now.toLocaleTimeString("id-ID", { hour: '2-digit', minute: '2-digit' });
+  const orderID = "SAV-" + Math.floor(1000 + Math.random() * 9000);
+
+  // Buat Rincian Item Pesanan
+  let itemsList = "";
+  let subtotal = 0;
+
+  cart.forEach((item, index) => {
+    const itemTotal = item.price * item.quantity;
+    subtotal += itemTotal;
+    itemsList += `${index + 1}. *${item.name}* (${item.quantity}x) = ${formatRupiah(itemTotal)}\n`;
+  });
+
+  const tax = subtotal * 0.1; // Pajak 10% (sesuaikan jika ada)
+  const grandTotal = subtotal + tax;
+
+  // Format Tipe Pesanan
+  let orderTypeLabel = "Dine-In";
+  if (orderType === "takeaway") orderTypeLabel = "Takeaway (Bawa Pulang)";
+  if (orderType === "reservation") orderTypeLabel = "Reservasi";
+
+  // Menyusun Teks Pesanan WhatsApp
+  let message = `*--- NOTA PESANAN NEW ORDER ---*\n`;
+  message += `*No. Antrean:* #${orderID}\n`;
+  message += `*Waktu:* ${timeString}\n\n`;
+  message += `*Nama Pemesan:* ${customerName}\n`;
+  message += `*Tipe Pesanan:* ${orderTypeLabel}\n`;
+  if (orderType === "dine-in") {
+    message += `*Nomor Meja:* Meja ${tableNo}\n`;
+  }
+  message += `\n*DETAIL PESANAN:*\n${itemsList}\n`;
+  message += `-----------------------------------\n`;
+  message += `*Subtotal:* ${formatRupiah(subtotal)}\n`;
+  message += `*Pajak (10%):* ${formatRupiah(tax)}\n`;
+  message += `*TOTAL BAYAR:* *${formatRupiah(grandTotal)}*\n`;
+  message += `-----------------------------------\n`;
+  message += `*Catatan Tambahan:* ${orderNotes}\n\n`;
+  message += `Mohon segera diproses ya, terima kasih!`;
+
+  // Encode teks agar valid untuk URL WhatsApp
+  const encodedMessage = encodeURIComponent(message);
+  const waURL = `https://wa.me/${6285709734655}?text=${encodedMessage}`;
+
+  // Buka WhatsApp di tab baru / aplikasi WA
+  window.open(waURL, "_blank");
+}
     </script>
 </body>
 </html>
