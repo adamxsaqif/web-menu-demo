@@ -1061,6 +1061,82 @@ function setOrderType(type) {
                 toast.classList.add("opacity-0", "pointer-events-none", "translate-y-4");
             }, 3000);
         }
+        // 1. Fungsi Utama Kirim Pesanan Langsung (Buka Modal Pembayaran Web)
+function sendOrder() {
+  if (cart.length === 0) {
+    alert("Keranjang pesanan masih kosong!");
+    return;
+  }
+
+  const customerName = document.getElementById("customerName")?.value.trim();
+  const tableNumber = document.getElementById("tableNumber")?.value.trim();
+  const paymentMethod = document.getElementById("paymentMethod")?.value || "QRIS";
+
+  if (!customerName) {
+    alert("Mohon isi Nama Pemesan terlebih dahulu.");
+    return;
+  }
+
+  const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const tax = subtotal * 0.10;
+  const grandTotal = subtotal + tax;
+
+  // Tampilkan Detail Pemesan di Modal
+  document.getElementById("modalCustomerDetail").innerText = `${customerName} • ${selectedOrderType} (${tableNumber || '-'})`;
+  document.getElementById("modalPayAmount").innerText = formatRupiah(grandTotal);
+  document.getElementById("modalPayMethod").innerText = paymentMethod;
+
+  // Tampilkan Instruksi Sesuai Metode Pembayaran
+  const instructionArea = document.getElementById("paymentInstructionArea");
+  
+  if (paymentMethod.includes("QRIS")) {
+    instructionArea.innerHTML = `
+      <div class="text-center space-y-2">
+        <p class="text-slate-600">Scan QRIS di bawah menggunakan GoPay, OVO, ShopeePay, Dana, atau Mobile Banking:</p>
+        <div class="bg-white p-3 rounded-2xl border border-slate-200 inline-block shadow-sm">
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=SAVORIA-DEMO-PAYMENT" alt="QRIS Code" class="w-40 h-40 mx-auto rounded-lg">
+        </div>
+      </div>
+    `;
+  } else if (paymentMethod.includes("Transfer Bank")) {
+    instructionArea.innerHTML = `
+      <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
+        <p class="font-bold text-slate-700">Bank BCA</p>
+        <p class="text-slate-500">No. Rekening: <span class="font-bold text-slate-800">123-456-7890</span></p>
+        <p class="text-slate-500">Atas Nama: <span class="font-bold text-slate-800">Savoria Bistro & Coffee</span></p>
+      </div>
+    `;
+  } else if (paymentMethod.includes("Tunai")) {
+    instructionArea.innerHTML = `
+      <div class="bg-amber-50 text-amber-800 p-3 rounded-xl border border-amber-200 text-center font-medium">
+        Silakan lakukan pembayaran tunai secara langsung di kasir toko.
+      </div>
+    `;
+  } else {
+    instructionArea.innerHTML = `
+      <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 text-center text-slate-600">
+        Silakan tunjukkan layar ini ke kasir / pelayan untuk proses pembayaran ${paymentMethod}.
+      </div>
+    `;
+  }
+
+  // Buka Modal Pembayaran & Tutup Cart Drawer
+  document.getElementById("paymentModal").classList.remove("hidden");
+  toggleCartDrawer();
+}
+
+// 2. Fungsi Tutup Modal Pembayaran
+function closePaymentModal() {
+  document.getElementById("paymentModal").classList.add("hidden");
+}
+
+// 3. Konfirmasi Pembayaran Berhasil & Reset Keranjang
+function confirmDirectPayment() {
+  alert("Terima kasih! Pesanan kamu berhasil diterima dan sedang diproses oleh dapur.");
+  cart = []; // Kosongkan keranjang
+  updateCartUI(); // Reset Tampilan
+  closePaymentModal();
+}
         function sendOrderToWhatsApp() {
   if (cart.length === 0) {
     alert("Keranjang pesanan masih kosong!");
@@ -1124,21 +1200,7 @@ function setOrderType(type) {
   }
   lastScrollTop = scrollTop <= 0 ? 0 : scrollTop; // Mencegah nilai negatif saat bouncing di iOS
 });
-function sendOrder() {
-  if (cart.length === 0) {
-    alert("Keranjang pesanan masih kosong!");
-    return;
-  }
 
-  const customerName = document.getElementById("customerName")?.value.trim();
-  if (!customerName) {
-    alert("Mohon isi Nama Pemesan terlebih dahulu.");
-    return;
-  }
-
-  // Panggil fungsi kirim via WhatsApp agar proses transaksi langsung berjalan
-  sendOrderToWhatsApp();
-}
 </script>
 <!-- FLOATING BOTTOM CART BAR -->
 <div id="floatingCartBar" onclick="toggleCartDrawer()" class="fixed bottom-4 left-4 right-4 md:left-auto md:right-6 md:w-96 bg-emerald-600 hover:bg-emerald-500 text-white p-4 rounded-2xl shadow-2xl z-40 cursor-pointer flex items-center justify-between transition-all transform hover:scale-[1.02]">
@@ -1161,6 +1223,42 @@ function sendOrder() {
   <div class="flex items-center space-x-2 font-bold text-sm bg-white/10 px-3 py-1.5 rounded-xl">
     <span>Lihat Pesanan</span>
     <i class="fa-solid fa-chevron-right text-xs"></i>
+  </div>
+</div>
+<!-- MODAL POP-UP PEMBAYARAN LANGSUNG -->
+<div id="paymentModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm hidden p-4">
+  <div class="bg-white rounded-3xl max-w-sm w-full p-6 text-center space-y-5 shadow-2xl relative animate-in fade-in zoom-in duration-200">
+    
+    <!-- Tombol Tutup -->
+    <button onclick="closePaymentModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+      <i class="fa-solid fa-xmark text-lg"></i>
+    </button>
+
+    <!-- Header Modal -->
+    <div>
+      <div class="w-12 h-12 bg-brand-100 text-brand-600 rounded-2xl flex items-center justify-center mx-auto mb-2">
+        <i class="fa-solid fa-receipt text-xl"></i>
+      </div>
+      <h3 class="font-bold text-lg text-slate-800">Pembayaran Pesanan</h3>
+      <p id="modalCustomerDetail" class="text-xs text-slate-500 font-medium mt-0.5">-</p>
+    </div>
+
+    <!-- Rincian Total -->
+    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+      <p class="text-xs text-slate-500 uppercase tracking-wider font-semibold">Total Tagihan</p>
+      <p id="modalPayAmount" class="text-2xl font-extrabold text-brand-600 mt-1">Rp 0</p>
+      <p id="modalPayMethod" class="text-xs font-bold text-slate-700 mt-1 bg-white py-1 px-3 rounded-full inline-block border border-slate-200">-</p>
+    </div>
+
+    <!-- Instruksi Pembayaran (Dinamis via JS) -->
+    <div id="paymentInstructionArea" class="text-left text-xs space-y-3">
+      <!-- Diisi oleh JS sesuai metode pembayaran yang dipilih -->
+    </div>
+
+    <!-- Tombol Konfirmasi Selesai -->
+    <button onclick="confirmDirectPayment()" class="w-full py-3.5 bg-brand-600 hover:bg-brand-500 text-white font-bold text-sm rounded-xl shadow-lg shadow-brand-500/20 transition-all">
+      Saya Sudah Bayar / Selesaikan
+    </button>
   </div>
 </div>
 </body>
